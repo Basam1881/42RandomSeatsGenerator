@@ -76,13 +76,25 @@ export class AppController {
     const getExamUsers: any = this.httpService
       .get('https://api.intra.42.fr/v2/events/11374/events_users', {
         headers: { authorization: accessToken }}).pipe(map((response) => response.data));
+        // let getExamUsers: any = [];
+        // let morePagesAvailable = true;
+        // let currentPage = 0;
+      
+        // while(morePagesAvailable) {
+        //   currentPage++;
+        //   const response = await fetch(`http://api.dhsprogram.com/rest/dhs/data?page=${currentPage}`)
+        //   let { data, total_pages } = await response.json();
+        //   data.forEach(e => getExamUsers.unshift(e));
+        //   morePagesAvailable = currentPage < total_pages;
+        // }      
+        // return getExamUsers;
     const getExams: any = this.httpService
       .get('https://api.intra.42.fr/v2/campus/43/exams', {
         headers: { authorization: accessToken }}).pipe(map((response) => response.data));
     const getUserLocations: any = this.httpService
       .get('https://api.intra.42.fr/v2/users/88405/locations?per_page=5', {
         headers: { authorization: accessToken }}).pipe(map((response) => response.data));
-    const examUsersTmp = await firstValueFrom(getExamUsers);
+    const examUsersTmp: any = await firstValueFrom(getExamUsers);
 
     // main data
     const examUsers = this.appservice.getRandomExamUsers(examUsersTmp);
@@ -90,8 +102,14 @@ export class AppController {
     const userLocations = await firstValueFrom(getUserLocations);
 
     // this.appservice.seatsGenerator(examUsers, exams, userLocations);
-    console.log(examUsers[0].user.login);
-    return  this.appservice.seatsGenerator(examUsers, exams, userLocations) ;
+    console.log(examUsers.length)
+    for (let i = 0; i < examUsers.length; i++) {
+      console.log(examUsers[i].user.login);
+    }
+    // getExamUsers.forEach(function(e) {
+    //   console.log(e.user.login);
+    // });
+    return  getExamUsers; ;
   }
 
   @Get('logout')

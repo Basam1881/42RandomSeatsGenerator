@@ -55,12 +55,12 @@ export class AppService {
 
   private clusters: number[][][] = [
     [ // Lab 1
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
     ],
     [ // Lab 2
     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -69,6 +69,9 @@ export class AppService {
     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
     ],
     [ // Lab 3
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -86,7 +89,7 @@ export class AppService {
   ];
   private users: User[] = [];
   private labMax: number = 3;
-  // private rawMax: number = 14;
+  private rawMax: number = 14;
 
   getExamsUsers(accessToken: string) {
       const getExamUsers: any = this.httpService
@@ -139,6 +142,56 @@ export class AppService {
     }
     return examUsers;
   }
+  
+  setLabAvailable(lab: number, raws: number, seats: number) {
+    for (let rawCnt: number = 0; rawCnt < raws; rawCnt++) {
+      for (let seatCnt: number = 0; seatCnt < seats; seatCnt++) {
+        this.clusters[lab][rawCnt][seatCnt] = 0;
+      }
+    }
+  }
+
+  setAvailableLabs(exams: any) {
+    if (exams[0].location.search('Lab1') !== -1) {
+      const raw = this.clusters[0].length;
+      const seats = this.rawMax;
+      this.setLabAvailable(0, raw, seats);
+    }
+    if (exams[0].location.search('Lab2') !== -1) {
+      const raw = this.clusters[1].length;
+      const seats = this.rawMax;
+      this.setLabAvailable(1, raw, seats);
+    }
+    if (exams[0].location.search('Lab3') !== -1) {
+      const raw = this.clusters[1].length;
+      const seats = this.rawMax;
+      this.setLabAvailable(2, raw, seats);
+    }
+  }
+
+  printClusters() {
+    for (let labCnt: number = 0; labCnt < this.clusters.length; labCnt++) {
+      console.log('----------------------------------------');
+      console.log('Lab' + (labCnt + 1) + ':');
+      for (let rawCnt: number = 0; rawCnt < this.clusters[labCnt].length; rawCnt++) {
+        console.log();
+        for (let seatCnt: number = 0; seatCnt < this.clusters[labCnt][rawCnt].length; seatCnt++) {
+          process.stdout.write(this.clusters[labCnt][rawCnt][seatCnt] + ' ');
+        }
+      }
+      console.log('\n----------------------------------------');
+    }
+  }
+
+  resetCluster() {
+    for (let labCnt: number = 0; labCnt < this.clusters.length; labCnt++) {
+      for (let rawCnt: number = 0; rawCnt < this.clusters[labCnt].length; rawCnt++) {
+        for (let seatCnt: number = 0; seatCnt < this.clusters[labCnt][rawCnt].length; seatCnt++) {
+          this.clusters[labCnt][rawCnt][seatCnt] = -1;
+        }
+      }
+    }
+  }
 
   getSeat(user: ExamUser) {
     for (let i: number = 0; i < this.pairs.length; i++) {
@@ -152,7 +205,7 @@ export class AppService {
             if (this.clusters[lab][raw][this.pairs[i][j]] === 0) {
               // console.log("-------");
               // console.log("lab" + i + "raw" + raw + "s" +this.pairs[i][j]);
-                let location: string = 'lab' + lab.toString() + 'r' + raw.toString() + 's'+ this.pairs[i][j];
+                let location: string = 'lab' + (lab + 1).toString() + 'r' + (raw + 1).toString() + 's'+ (this.pairs[i][j] + 1).toString();
               // console.log({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email})
               this.users.push({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email});
               this.clusters[lab][raw][this.pairs[i][j]] = 1;
@@ -166,7 +219,13 @@ export class AppService {
   }
 
   seatsGenerator(examUsers: any, exams: any, userLocations: any) {
+    this.resetCluster();
+    // this.printClusters();
+    this.setAvailableLabs(exams);
+    this.printClusters();
+    
     for (let i: number = 0; i < 30; i++) {
+      console.log(i);
       this.getSeat(examUsers[i].user);
     }
     return this.users;
