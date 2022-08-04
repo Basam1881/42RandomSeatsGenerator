@@ -90,6 +90,7 @@ export class AppService {
   private users: User[] = [];
   private labMax: number = 3;
   private rawMax: number = 14;
+  public accessToken: string;
 
   getExamsUsers(accessToken: string) {
       const getExamUsers: any = this.httpService
@@ -193,41 +194,95 @@ export class AppService {
     }
   }
 
-  getSeat(user: ExamUser) {
+  getLocationString() {
+
+  }
+
+  async setSeat(user: ExamUser) {
     for (let i: number = 0; i < this.pairs.length; i++) {
       for (let lab: number = 0; lab < this.labMax; lab++) {
         for (let raw: number = 0; raw < this.clusters[lab].length; raw++) {
           for (let j: number = 0; j < this.pairs[i].length; j++) {
-            // console.log(lab);
-            // console.log(raw);
-            // console.log(this.pairs[i][j]);
-            // console.log("-------");
+
             if (this.clusters[lab][raw][this.pairs[i][j]] === 0) {
-              // console.log("-------");
-              // console.log("lab" + i + "raw" + raw + "s" +this.pairs[i][j]);
-                let location: string = 'lab' + (lab + 1).toString() + 'r' + (raw + 1).toString() + 's'+ (this.pairs[i][j] + 1).toString();
-              // console.log({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email})
+              const location: string = 'lab' + (lab + 1).toString() + 'r' + (raw + 1).toString() + 's'+ (this.pairs[i][j] + 1).toString();
+              // console.log(location);
+              // if (await this.isUserValidForLocation(user, location) === false)
+              //   return null;
               this.users.push({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email});
               this.clusters[lab][raw][this.pairs[i][j]] = 1;
               return location;
             }
+
           }
         }
       }
     }
-    return 'FULL';
+    return null;
   }
 
-  seatsGenerator(examUsers: any, exams: any, userLocations: any) {
-    this.resetCluster();
-    // this.printClusters();
-    this.setAvailableLabs(exams);
-    this.printClusters();
-    
-    for (let i: number = 0; i < 30; i++) {
-      console.log(i);
-      this.getSeat(examUsers[i].user);
+  // unsetSeat(user: ExamUser) {
+  //   for (let i: number = 0; i < this.pairs.length; i++) {
+  //     for (let lab: number = 0; lab < this.labMax; lab++) {
+  //       for (let raw: number = 0; raw < this.clusters[lab].length; raw++) {
+  //         for (let j: number = 0; j < this.pairs[i].length; j++) {
+
+  //           if (this.clusters[lab][raw][this.pairs[i][j]] === 0) {
+  //             const location: string = 'lab' + (lab + 1).toString() + 'r' + (raw + 1).toString() + 's'+ (this.pairs[i][j] + 1).toString();
+  //             this.users.push({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email});
+  //             this.clusters[lab][raw][this.pairs[i][j]] = 1;
+  //             return location;
+  //           }
+
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+
+  async isUserValidForLocation(user: ExamUser, location: string) {
+    const per_page: number = 5;
+    const getUserLocations: any = this.httpService
+    .get(`https://api.intra.42.fr/v2/users/${user.login}/locations?per_page=${per_page}`, {
+      headers: { authorization: this.accessToken }}).pipe(map((response) => response.data));
+    const userLocations: any = await firstValueFrom(getUserLocations);
+    // console.log('hello');
+    for (let i: number = 0; i < userLocations.length; i++) {
+      if (userLocations[i].host === location) {
+        console.log ('User ' + user.login + ' is not valid for ' + location);
+        return false;
+      }
     }
+    console.log ('User ' + user.login + ' is valid for ' + location);
+    return true;
+  }
+
+  bruteForce(examUsers: any) {
+    for (let i: number = 0; i < examUsers.length; i++) {
+      this.setSeat(examUsers[i].user);
+    }
+  }
+
+  async seatsGenerator(exams: any) {
+    this.resetCluster();
+    this.setAvailableLabs(exams);
+
+    const per_page: number = 100;
+    let page: number = 1;
+    let length: number = per_page;
+    
+    while (length === per_page) {
+      let getExamUsers: any = this.httpService
+        .get(`https://api.intra.42.fr/v2/events/11374/events_users?per_page=${per_page}&page=${page}`, {
+          headers: { authorization: this.accessToken }}).pipe(map((response) => response.data));
+      let examUsersTmp: any = await firstValueFrom(getExamUsers);
+      let examUsers: any = this.getRandomExamUsers(examUsersTmp);
+      page++;
+      this.bruteForce(examUsers);
+      console.log(examUsers.length)
+      length = examUsers.length;
+    }
+    this.printClusters();
     return this.users;
   }
   
