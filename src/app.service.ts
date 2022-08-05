@@ -12,6 +12,8 @@ import { HttpService } from '@nestjs/axios';
 import { User } from './login/user.decorator';
 import { Profile } from 'passport-42';
 import { firstValueFrom, map } from 'rxjs';
+import { MailerService } from '@nestjs-modules/mailer';
+import { MailService } from './mail/mail.service';
 
 export interface ExamUser {
   id:                number;
@@ -50,7 +52,7 @@ type User = {
 
 @Injectable()
 export class AppService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService, private readonly mailService: MailService) {}
 
 
   private clusters: number[][][] = [
@@ -91,6 +93,24 @@ export class AppService {
   private labMax: number = 3;
   private rawMax: number = 14;
   public accessToken: string;
+
+  example(): void {
+    console.log("sending");
+    this.mailService.sendUserConfirmation();
+    // this.mailerService
+    //   .sendMail({
+    //     to: 'radiriyas@gmail.com', // list of receivers
+    //     from: 'bassam1881999@gmail.com', // sender address
+    //     subject: 'Testing Nest MailerModule ✔', // Subject line
+    //     text: 'welcome from my first mail sender', // plaintext body
+    //     html: '<b>welcome again from my first mail sender</b>', // HTML body content
+    //   })
+    //   .then((r) => {
+    //     console.log(r);
+    //   })
+    //   .catch(() => {});
+    console.log("Done");
+  }
 
   getExamsUsers(accessToken: string) {
       const getExamUsers: any = this.httpService

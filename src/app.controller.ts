@@ -31,6 +31,11 @@ export class AppController {
     return;
   }
 
+  @Get('mail')
+  mailer() {
+    this.appservice.example();
+  }
+
   @Get('profile')
   @UseGuards(AuthenticatedGuard)
   @Render('profile')
