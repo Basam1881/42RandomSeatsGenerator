@@ -25,7 +25,7 @@ import { join } from 'path';
         },
       },
       defaults: {
-        from: '"No Reply" <bassam1881999@gmail.com>',
+        from: `"No Reply" <${process.env.MAIL_USER}>`,
       },
       // },
       template: {
@@ -35,7 +35,7 @@ import { join } from 'path';
           strict: true,
         },
       },
-      preview: true,
+      // preview: true,
     }),
   ],
   providers: [MailService],

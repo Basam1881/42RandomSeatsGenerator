@@ -117,6 +117,7 @@ export class AppController {
     // getExamUsers.forEach(function(e) {
     //   console.log(e.user.login);
     // });
+    // console.log(exams.projects.name);
     return this.appservice.seatsGenerator(exams);
   }
 

@@ -14,41 +14,7 @@ import { Profile } from 'passport-42';
 import { firstValueFrom, map } from 'rxjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
-// export { User } from 'user/user.type'
-
-export interface ExamUser {
-  id:                number;
-  email:             string;
-  login:             string;
-  first_name:        string;
-  last_name:         string;
-  usual_full_name:   string;
-  usual_first_name:  null;
-  url:               string;
-  phone:             string;
-  displayname:       string;
-  image_url:         string;
-  new_image_url:     string;
-  "staff?":          boolean;
-  correction_point:  number;
-  pool_month:        string;
-  pool_year:         string;
-  location:          null;
-  wallet:            number;
-  anonymize_date:    Date;
-  data_erasure_date: Date;
-  created_at:        Date;
-  updated_at:        Date;
-  alumnized_at:      null;
-  "alumni?":         boolean;
-}
-
-type User = {
-  login: string
-  usual_full_name:string
-  location: string
-  email: string
-}
+import { User, ExamUser } from './app.interface'
 
 @Injectable()
 export class AppService {
@@ -100,8 +66,10 @@ export class AppService {
   public typeID: number;
   public typeUsers: string;
 
-  sendEmail(user: User): void {
-    this.mailService.sendUserConfirmation(user);
+  sendEmails(user: User[], exam: any): void {
+    for (let i: number = 0; i < user.length; i++) {
+      this.mailService.sendUserConfirmation(user[i], exam);
+    }
   }
 
   getLastWeekDate() {
@@ -274,13 +242,14 @@ export class AppService {
       let examUsers: any = this.getRandomExamUsers(examUsersTmp);
       page++;
       this.bruteForce(examUsers);
-      console.log(examUsers.length)
+      console.log(examUsers.length);
       length = examUsers.length;
     }
-    this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s3" , email: 'bassa1881999@gmail.com'});
-    this.sendEmail(this.usersExample[0]);
+    this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s3" , email: 'bassam1881999@gmail.com'});
+    // this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s12" , email: 'bnaji1881999f@gmail.com'});
+    // this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s12" , email: 'bnaji@student.42abudhabi.ae'});
+    this.sendEmails(this.usersExample, exam);
     this.printClusters();
     return this.users;
   }
-  
 }
