@@ -2,15 +2,22 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 // import { User } from './../user/user.entity';
 
+type User = {
+  login: string
+  usual_full_name:string
+  location: string
+  email: string
+}
+
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}
 
-    sendUserConfirmation(/* user: User, token: string */) {
+    sendUserConfirmation(user: User/* , token: string */) {
     // const url = `example.com/auth/confirm?token=${token}`;
 
      this.mailerService.sendMail({
-      to: process.env.MAIL_USER/* user.email */,
+      to: user.email,
       // from: 'bassam1881999@gmail.com',
       // from: '"Support Team" <support@example.com>', // override default from
       subject: 'Welcome to Nice App! Confirm your Email',

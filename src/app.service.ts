@@ -9,11 +9,12 @@ import {
 } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { User } from './login/user.decorator';
+// import { User } from './login/user.decorator';
 import { Profile } from 'passport-42';
 import { firstValueFrom, map } from 'rxjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
+// export { User } from 'user/user.type'
 
 export interface ExamUser {
   id:                number;
@@ -43,7 +44,6 @@ export interface ExamUser {
 }
 
 type User = {
-  id: number
   login: string
   usual_full_name:string
   location: string
@@ -90,43 +90,18 @@ export class AppService {
     [3, 10]
   ];
   private users: User[] = [];
+  private usersExample: User[] = [];
   private labMax: number = 3;
   private rawMax: number = 14;
   public accessToken: string;
+  public baseURL: string;
+  public examID: number;
+  public type: string;
+  public typeID: number;
+  public typeUsers: string;
 
-  example(): void {
-    console.log("sending");
-    this.mailService.sendUserConfirmation();
-    // this.mailerService
-    //   .sendMail({
-    //     to: 'radiriyas@gmail.com', // list of receivers
-    //     from: 'bassam1881999@gmail.com', // sender address
-    //     subject: 'Testing Nest MailerModule ✔', // Subject line
-    //     text: 'welcome from my first mail sender', // plaintext body
-    //     html: '<b>welcome again from my first mail sender</b>', // HTML body content
-    //   })
-    //   .then((r) => {
-    //     console.log(r);
-    //   })
-    //   .catch(() => {});
-    console.log("Done");
-  }
-
-  getExamsUsers(accessToken: string) {
-      const getExamUsers: any = this.httpService
-      .get('https://api.intra.42.fr/v2/events/11374/events_users', {
-        headers: {
-          authorization: accessToken,
-        },
-      })
-      .pipe(
-        map((response) =>
-          response.data
-        ),
-      );
-      // const examUsers = await firstValueFrom(getExamUsers);
-      // console.log(examUsers[0].user.login);
-      return { getExamUsers };
+  sendEmail(user: User): void {
+    this.mailService.sendUserConfirmation(user);
   }
 
   getLastWeekDate() {
@@ -154,7 +129,7 @@ export class AppService {
   }
 
   getRandomExamUsers(examUsersTmp: any) {
-    const examUsers = JSON.parse(JSON.stringify(examUsersTmp)) as typeof examUsersTmp;
+    let examUsers = JSON.parse(JSON.stringify(examUsersTmp)) as typeof examUsersTmp;
     const length: number = examUsersTmp.length;
     for (let i: number = 0; i != length; i++) {
       let index: number = Math.floor(Math.random() * examUsersTmp.length);
@@ -172,18 +147,18 @@ export class AppService {
     }
   }
 
-  setAvailableLabs(exams: any) {
-    if (exams[0].location.search('Lab1') !== -1) {
+  setAvailableLabs(exam: any) {
+    if (exam.location.search('Lab1') !== -1) {
       const raw = this.clusters[0].length;
       const seats = this.rawMax;
       this.setLabAvailable(0, raw, seats);
     }
-    if (exams[0].location.search('Lab2') !== -1) {
+    if (exam.location.search('Lab2') !== -1) {
       const raw = this.clusters[1].length;
       const seats = this.rawMax;
       this.setLabAvailable(1, raw, seats);
     }
-    if (exams[0].location.search('Lab3') !== -1) {
+    if (exam.location.search('Lab3') !== -1) {
       const raw = this.clusters[1].length;
       const seats = this.rawMax;
       this.setLabAvailable(2, raw, seats);
@@ -225,20 +200,20 @@ export class AppService {
           for (let j: number = 0; j < this.pairs[i].length; j++) {
 
             if (this.clusters[lab][raw][this.pairs[i][j]] === 0) {
-              const location: string = 'lab' + (lab + 1).toString() + 'r' + (raw + 1).toString() + 's'+ (this.pairs[i][j] + 1).toString();
+              const userLocation: string = `lab${lab + 1}r${raw + 1}s${this.pairs[i][j] + 1}`;
               // console.log(location);
               // if (await this.isUserValidForLocation(user, location) === false)
               //   return null;
-              this.users.push({id: user.id, login: user.login, usual_full_name: user.usual_full_name, location, email: user.email});
+              this.users.push({login: user.login, usual_full_name: user.usual_full_name, location: userLocation, email: user.email});
               this.clusters[lab][raw][this.pairs[i][j]] = 1;
-              return location;
+              // return location;
             }
 
           }
         }
       }
     }
-    return null;
+    // return null;
   }
 
   // unsetSeat(user: ExamUser) {
@@ -283,18 +258,18 @@ export class AppService {
     }
   }
 
-  async seatsGenerator(exams: any) {
+  async seatsGenerator(exam: any) {
     this.resetCluster();
-    this.setAvailableLabs(exams);
+    this.setAvailableLabs(exam);
 
     const per_page: number = 100;
     let page: number = 1;
     let length: number = per_page;
-    
+
     while (length === per_page) {
       let getExamUsers: any = this.httpService
-        .get(`https://api.intra.42.fr/v2/events/11374/events_users?per_page=${per_page}&page=${page}`, {
-          headers: { authorization: this.accessToken }}).pipe(map((response) => response.data));
+      .get(`${this.baseURL}/${this.type}/${this.typeID}/${this.typeUsers}?per_page=${per_page}&page=${page}`, {
+        headers: { authorization: this.accessToken }}).pipe(map((response) => response.data));
       let examUsersTmp: any = await firstValueFrom(getExamUsers);
       let examUsers: any = this.getRandomExamUsers(examUsersTmp);
       page++;
@@ -302,6 +277,8 @@ export class AppService {
       console.log(examUsers.length)
       length = examUsers.length;
     }
+    this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s3" , email: 'bassa1881999@gmail.com'});
+    this.sendEmail(this.usersExample[0]);
     this.printClusters();
     return this.users;
   }

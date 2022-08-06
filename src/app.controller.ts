@@ -33,7 +33,7 @@ export class AppController {
 
   @Get('mail')
   mailer() {
-    this.appservice.example();
+    // this.appservice.sendEmail();
   }
 
   @Get('profile')
@@ -77,6 +77,11 @@ export class AppController {
   async user(@Req() req: Request) {
     const accessToken: string = req.headers.authorization;
     this.appservice.accessToken = accessToken;
+    this.appservice.baseURL = 'https://api.intra.42.fr/v2';
+    this.appservice.examID = 8561;
+    this.appservice.type = 'events';
+    this.appservice.typeID = 11374;
+    this.appservice.typeUsers = 'events_users';
     // console.log(req.headers);
     // console.log(accessToken);
         // let getExamUsers: any = [];
@@ -93,7 +98,7 @@ export class AppController {
         // return getExamUsers;
 
     const getExams: any = this.httpService
-      .get('https://api.intra.42.fr/v2/campus/43/exams', {
+      .get(`${this.appservice.baseURL}/exams/${this.appservice.examID}`, {
         headers: { authorization: accessToken }}).pipe(map((response) => response.data));
     // const getUserLocations: any = this.httpService
     //   .get('https://api.intra.42.fr/v2/users/88405/locations?per_page=5', {
