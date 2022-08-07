@@ -14,6 +14,7 @@ import { Request } from 'express';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, map } from 'rxjs';
 import { AppService } from './app.service';
+import { Exam } from './app.interface'
 
 @Controller()
 export class AppController {
@@ -106,7 +107,7 @@ export class AppController {
 
 
     // main data
-    const exams = await firstValueFrom(getExams);
+    const exams: Exam = await firstValueFrom(getExams);
     // const userLocations = await firstValueFrom(getUserLocations);
 
     // this.appservice.seatsGenerator(exams, userLocations);

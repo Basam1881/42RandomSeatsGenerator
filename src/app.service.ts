@@ -14,7 +14,7 @@ import { Profile } from 'passport-42';
 import { firstValueFrom, map } from 'rxjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
-import { User, ExamUser } from './app.interface'
+import { User, ExamUser, Exam } from './app.interface'
 
 @Injectable()
 export class AppService {
@@ -66,7 +66,7 @@ export class AppService {
   public typeID: number;
   public typeUsers: string;
 
-  sendEmails(user: User[], exam: any): void {
+  sendEmails(user: User[], exam: Exam): void {
     for (let i: number = 0; i < user.length; i++) {
       this.mailService.sendUserConfirmation(user[i], exam);
     }
@@ -115,7 +115,7 @@ export class AppService {
     }
   }
 
-  setAvailableLabs(exam: any) {
+  setAvailableLabs(exam: Exam) {
     if (exam.location.search('Lab1') !== -1) {
       const raw = this.clusters[0].length;
       const seats = this.rawMax;
@@ -174,14 +174,14 @@ export class AppService {
               //   return null;
               this.users.push({login: user.login, usual_full_name: user.usual_full_name, location: userLocation, email: user.email});
               this.clusters[lab][raw][this.pairs[i][j]] = 1;
-              // return location;
+              return userLocation;
             }
 
           }
         }
       }
     }
-    // return null;
+    return null;
   }
 
   // unsetSeat(user: ExamUser) {
@@ -208,8 +208,9 @@ export class AppService {
     const getUserLocations: any = this.httpService
     .get(`https://api.intra.42.fr/v2/users/${user.login}/locations?per_page=${per_page}`, {
       headers: { authorization: this.accessToken }}).pipe(map((response) => response.data));
-    const userLocations: any = await firstValueFrom(getUserLocations);
-    // console.log('hello');
+      const userLocations: any = await firstValueFrom(getUserLocations);
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log('hello');
     for (let i: number = 0; i < userLocations.length; i++) {
       if (userLocations[i].host === location) {
         console.log ('User ' + user.login + ' is not valid for ' + location);
@@ -226,7 +227,7 @@ export class AppService {
     }
   }
 
-  async seatsGenerator(exam: any) {
+  async seatsGenerator(exam: Exam) {
     this.resetCluster();
     this.setAvailableLabs(exam);
 
@@ -242,13 +243,14 @@ export class AppService {
       let examUsers: any = this.getRandomExamUsers(examUsersTmp);
       page++;
       this.bruteForce(examUsers);
-      console.log(examUsers.length);
+      console.log(examUsers[0].users.login);
       length = examUsers.length;
+      this.isUserValidForLocation(examUsers[0].users, this.users[0].location);
     }
-    this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s3" , email: 'bassam1881999@gmail.com'});
+    // this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s3" , email: 'bassam1881999@gmail.com'});
     // this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s12" , email: 'bnaji1881999f@gmail.com'});
     // this.usersExample.push({login: "bnaji", usual_full_name: "Bassam Naji", location: "lab1r1s12" , email: 'bnaji@student.42abudhabi.ae'});
-    this.sendEmails(this.usersExample, exam);
+    // this.sendEmails(this.usersExample, exam);
     this.printClusters();
     return this.users;
   }
